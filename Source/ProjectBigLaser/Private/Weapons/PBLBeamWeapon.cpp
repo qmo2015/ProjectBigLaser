@@ -13,30 +13,41 @@ APBLBeamWeapon::APBLBeamWeapon()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
-	//SetRootComponent(WeaponMesh);
-	RootComponent = WeaponMesh;
-	WeaponMesh->SetStaticMesh(WeaponMeshAsset);
-	WeaponMesh->SetVisibility(true);
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+
+	// create the first person mesh
+	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("First Person Mesh"));
+	WeaponMesh->SetupAttachment(RootComponent);
+
+	WeaponMesh->SetCollisionProfileName(FName("NoCollision"));
+	WeaponMesh->SetFirstPersonPrimitiveType(EFirstPersonPrimitiveType::FirstPerson);
+	WeaponMesh->bOnlyOwnerSee = true;
+
+	// create the third person mesh
+	ThirdPersonWeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Third Person Mesh"));
+	ThirdPersonWeaponMesh->SetupAttachment(RootComponent);
+
+	ThirdPersonWeaponMesh->SetCollisionProfileName(FName("NoCollision"));
+	ThirdPersonWeaponMesh->SetFirstPersonPrimitiveType(EFirstPersonPrimitiveType::WorldSpaceRepresentation);
+	ThirdPersonWeaponMesh->bOwnerNoSee = true;
 }
 
 TTuple<FVector, FVector> APBLBeamWeapon::GetBeamPos()
 {
-
-	const FVector start{ GetActorLocation() + GetActorRotation().RotateVector(MuzzleOffset) };
-	FVector traceEnd = start + GetActorForwardVector() * bMaxRange;
+	FVector Start = WeaponMesh->GetSocketLocation(TEXT("Muzzle"));
+	FVector Direction = WeaponMesh->GetSocketRotation(TEXT("Muzzle")).Vector();
+	FVector End = Start + Direction * bMaxRange;
 
 	FHitResult TraceHit;
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);
 
-	FVector BeamEnd{ traceEnd };
-	if (GetWorld()->LineTraceSingleByChannel(TraceHit, start, traceEnd, ECC_Visibility, QueryParams))
+	if (GetWorld()->LineTraceSingleByChannel(TraceHit, Start, End, ECC_Visibility, QueryParams))
 	{
-		BeamEnd = TraceHit.ImpactPoint;
+		End = TraceHit.ImpactPoint;
 	}
-
-	return { start, BeamEnd };
+	auto s = { Start, End };
+	return { Start, End };
 }
 
 // Called when the game starts or when spawned
@@ -83,7 +94,6 @@ void APBLBeamWeapon::PrimaryActionStart()
 	GetWorld()->GetTimerManager().SetTimer(BeamTickTimer, this, &APBLBeamWeapon::BeamTick, bPrimartActionTickRate, true);
 
 	//spawn beam
-	
 	BeamComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
 		BeamSystem,
 		WeaponMesh,
@@ -96,6 +106,7 @@ void APBLBeamWeapon::PrimaryActionStart()
 	if (BeamComponent)
 	{
 		auto [start, end] { GetBeamPos() };
+
 		BeamComponent->SetVariablePosition(TEXT("User.BeamStart"), start);
 		BeamComponent->SetVariablePosition(TEXT("User.BeamEnd"), end);
 		BeamComponent->SetVariableFloat(TEXT("User.BeamWidth"), bEffectWidth);

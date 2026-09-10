@@ -13,7 +13,7 @@ class PROJECTBIGLASER_API APBLBeamWeapon : public AActor
 	
 private:	
 	//TODO: item definition
-	float bMaxRange{ 100.f };
+	float bMaxRange{ 2000.f };
 	float bEffectWidth{ 5.f };
 	float bPrimartActionTickRate{ 0.2f };
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -21,18 +21,21 @@ private:
 
 	bool bIsFiring{ false };
 	FTimerHandle BeamTickTimer;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon",
-		meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UStaticMeshComponent> WeaponMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USkeletalMeshComponent> WeaponMesh;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon",
-		meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UStaticMesh> WeaponMeshAsset;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USkeletalMeshComponent> ThirdPersonWeaponMesh;
 
 	class UNiagaraComponent* BeamComponent;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-
 	class UNiagaraSystem* BeamSystem;
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	TSubclassOf<UAnimInstance> FirstPersonAnimInstanceClass;
+
+	/** AnimInstance class to set for the third person character mesh when this weapon is active */
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	TSubclassOf<UAnimInstance> ThirdPersonAnimInstanceClass;
 
 private:
 	TTuple<FVector, FVector> GetBeamPos();
@@ -48,4 +51,20 @@ public:
 	void PrimaryActionStart();
 	UFUNCTION(BlueprintCallable)
 	void PrimaryActionEnd();
+	UFUNCTION(BlueprintCallable)
+	inline const TSubclassOf<UAnimInstance>& GetFirstPersonAnimInstanceClass() const
+	{
+		return FirstPersonAnimInstanceClass;
+	}
+	UFUNCTION(BlueprintCallable)
+	inline const TSubclassOf<UAnimInstance>& GetThirdPersonAnimInstanceClass() const
+	{
+		return ThirdPersonAnimInstanceClass;
+	}
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	USkeletalMeshComponent* GetFirstPersonMesh() const { return WeaponMesh; };
+
+	/** Returns the third person mesh */
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	USkeletalMeshComponent* GetThirdPersonMesh() const { return ThirdPersonWeaponMesh; };
 };
