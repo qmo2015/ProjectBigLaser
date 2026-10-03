@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "DataAssets/PBLRangedWeaponItemData.h"
 #include "PBLBeamWeapon.generated.h"
 
 UCLASS()
@@ -11,28 +12,22 @@ class PROJECTBIGLASER_API APBLBeamWeapon : public AActor
 {
 	GENERATED_BODY()
 	
-private:	
-	//TODO: item definition
-	float bMaxRange{ 2000.f };
-	float bEffectWidth{ 5.f };
-	float bPrimartActionTickRate{ 0.2f };
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	FVector MuzzleOffset;
+private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item Data", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPBLRangedWeaponItemData> itemData;
 
 	bool bIsFiring{ false };
 	FTimerHandle BeamTickTimer;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> WeaponMesh;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> ThirdPersonWeaponMesh;
 
 	class UNiagaraComponent* BeamComponent;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class UNiagaraSystem* BeamSystem;
+
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	TSubclassOf<UAnimInstance> FirstPersonAnimInstanceClass;
-
 	/** AnimInstance class to set for the third person character mesh when this weapon is active */
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	TSubclassOf<UAnimInstance> ThirdPersonAnimInstanceClass;

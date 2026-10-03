@@ -19,7 +19,9 @@ public class ProjectBigLaser : ModuleRules
 			"GameplayStateTreeModule",
 			"UMG",
 			"Slate",
-            "Niagara"
+            "Niagara",
+            "Messaging",
+			"MessagingCommon"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

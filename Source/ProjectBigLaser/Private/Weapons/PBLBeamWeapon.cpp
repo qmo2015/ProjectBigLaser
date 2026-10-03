@@ -5,12 +5,11 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
-
-
+#include "Engine/AssetManager.h"
 // Sets default values
 APBLBeamWeapon::APBLBeamWeapon()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
@@ -36,7 +35,7 @@ TTuple<FVector, FVector> APBLBeamWeapon::GetBeamPos()
 {
 	FVector Start = WeaponMesh->GetSocketLocation(TEXT("Muzzle"));
 	FVector Direction = WeaponMesh->GetSocketRotation(TEXT("Muzzle")).Vector();
-	FVector End = Start + Direction * bMaxRange;
+	FVector End = Start + Direction * itemData->MaxRange;
 
 	FHitResult TraceHit;
 	FCollisionQueryParams QueryParams;
@@ -54,7 +53,7 @@ TTuple<FVector, FVector> APBLBeamWeapon::GetBeamPos()
 void APBLBeamWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 }
 
 // Called every frame
@@ -64,7 +63,7 @@ void APBLBeamWeapon::Tick(float DeltaTime)
 	// Update beam visual
 	if (bIsFiring && BeamComponent)
 	{
-		auto [start, end]{ GetBeamPos() };
+		auto [start, end] { GetBeamPos() };
 		BeamComponent->SetVariablePosition(
 			TEXT("User.BeamStart"),
 			start
@@ -91,26 +90,36 @@ void APBLBeamWeapon::PrimaryActionStart()
 {
 	bIsFiring = true;
 	// set timer
-	GetWorld()->GetTimerManager().SetTimer(BeamTickTimer, this, &APBLBeamWeapon::BeamTick, bPrimartActionTickRate, true);
+	GetWorld()->GetTimerManager().SetTimer(BeamTickTimer, this, &APBLBeamWeapon::BeamTick, itemData->PrimaryActionRate, true);
 
 	//spawn beam
-	BeamComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-		BeamSystem,
-		WeaponMesh,
-		TEXT("Muzzle"), 
-		FVector::ZeroVector,
-		FRotator::ZeroRotator,
-		EAttachLocation::SnapToTarget,
-		false);
+	UAssetManager::GetStreamableManager().RequestAsyncLoad(itemData->ParticleSystem.ToSoftObjectPath(),
+		FStreamableDelegate::CreateLambda(
+			[this]()
+			{
+				/*UNiagaraSystem* particleSystem{ Cast<UNiagaraSystem>(LoadedObject) };*/
 
-	if (BeamComponent)
-	{
-		auto [start, end] { GetBeamPos() };
+				BeamComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+					itemData->ParticleSystem.Get(),
+					WeaponMesh,
+					TEXT("Muzzle"),
+					FVector::ZeroVector,
+					FRotator::ZeroRotator,
+					EAttachLocation::SnapToTarget,
+					false);
 
-		BeamComponent->SetVariablePosition(TEXT("User.BeamStart"), start);
-		BeamComponent->SetVariablePosition(TEXT("User.BeamEnd"), end);
-		BeamComponent->SetVariableFloat(TEXT("User.BeamWidth"), bEffectWidth);
-	}
+				if (BeamComponent)
+				{
+					auto [start, end] { GetBeamPos() };
+
+					BeamComponent->SetVariablePosition(TEXT("User.BeamStart"), start);
+					BeamComponent->SetVariablePosition(TEXT("User.BeamEnd"), end);
+					BeamComponent->SetVariableFloat(TEXT("User.BeamWidth"), itemData->EffectiveWidth);
+				}
+			}
+
+		)
+	);
 }
 
 void APBLBeamWeapon::PrimaryActionEnd()
