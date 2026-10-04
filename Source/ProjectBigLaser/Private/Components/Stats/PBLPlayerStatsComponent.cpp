@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Components/PBLPlayerStatsComponent.h"
+#include "Components/Stats/PBLPlayerStatsComponent.h"
 
 // Sets default values for this component's properties
 UPBLPlayerStatsComponent::UPBLPlayerStatsComponent()

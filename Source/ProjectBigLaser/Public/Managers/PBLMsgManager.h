@@ -5,19 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "MessageEndpoint.h"
+#include "DataTypes/PBLMsgTypes.h"
 #include "PBLMsgManager.generated.h"
-
-USTRUCT()
-struct FPlayerDiedMessage
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	int32 PlayerId = -1;
-
-	UPROPERTY()
-	FVector Location = FVector::ZeroVector;
-};
 
 UCLASS()
 class PROJECTBIGLASER_API APBLMsgManager : public AActor
