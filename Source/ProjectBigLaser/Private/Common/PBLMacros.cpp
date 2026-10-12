@@ -2,11 +2,3 @@
 
 
 #include "Common/PBLMacros.h"
-
-PBLMacros::PBLMacros()
-{
-}
-
-PBLMacros::~PBLMacros()
-{
-}

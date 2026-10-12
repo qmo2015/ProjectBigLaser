@@ -3,13 +3,4 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
-/**
- * 
- */
-class PROJECTBIGLASER_API PBLMacros
-{
-public:
-	PBLMacros();
-	~PBLMacros();
-};
+#define MAXPROTECTIONVALUE 0.005f
